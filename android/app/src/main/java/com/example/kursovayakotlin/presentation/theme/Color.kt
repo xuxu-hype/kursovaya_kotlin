@@ -1,4 +1,4 @@
-package com.example.kursovayakotlin.ui.theme
+package com.example.kursovayakotlin.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -7,6 +7,7 @@ import com.example.fooddelivery.server.domain.repository.UserRepository
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
 import java.util.UUID
 
@@ -27,12 +28,14 @@ class ExposedUserRepository : UserRepository {
         phone: String?,
     ): User =
         transaction {
-            UsersTable
+            val existingUser = UsersTable
                 .selectAll()
                 .where { UsersTable.firebaseUid eq firebaseUid }
                 .singleOrNull()
                 ?.toUser()
-                ?: UsersTable.insert {
+
+            if (existingUser == null) {
+                UsersTable.insert {
                     it[id] = UUID.randomUUID()
                     it[UsersTable.firebaseUid] = firebaseUid
                     it[UsersTable.email] = email
@@ -41,5 +44,18 @@ class ExposedUserRepository : UserRepository {
                     it[role] = "CUSTOMER"
                     it[createdAt] = Instant.now()
                 }.resultedValues!!.single().toUser()
+            } else {
+                UsersTable.update({ UsersTable.firebaseUid eq firebaseUid }) {
+                    it[UsersTable.email] = email
+                    it[UsersTable.displayName] = displayName
+                    it[UsersTable.phone] = phone
+                }
+
+                UsersTable
+                    .selectAll()
+                    .where { UsersTable.firebaseUid eq firebaseUid }
+                    .single()
+                    .toUser()
+            }
         }
 }
