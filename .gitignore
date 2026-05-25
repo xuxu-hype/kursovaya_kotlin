@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Kotlin
+.kotlin/
+**/.kotlin/
+
+# Generated / compiled
+bin/
+**/bin/
+out/
+**/out/
+
+# Android local files
+local.properties
+**/local.properties
+
+# Android generated
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Secrets / env
+.env
+*.env
+serviceAccountKey.json
+firebase-service-account.json
+google-services.json
+*.key
+*.pem
+
+# Logs
+*.log

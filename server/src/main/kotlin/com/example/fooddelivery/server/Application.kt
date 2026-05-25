@@ -1,6 +1,6 @@
 package com.example.fooddelivery.server
 
-import com.example.fooddelivery.server.auth.FirebaseAuthService
+import com.example.fooddelivery.server.auth.FirebaseTokenVerifier
 import com.example.fooddelivery.server.auth.installFirebaseAuth
 import com.example.fooddelivery.server.config.AppConfig
 import com.example.fooddelivery.server.db.DatabaseFactory
@@ -28,8 +28,8 @@ fun Application.module() {
         DatabaseFactory.shutdown()
     }
 
-    val firebaseAuth = FirebaseAuthService.create(appConfig)
-    installFirebaseAuth(firebaseAuth)
+    val tokenVerifier = FirebaseTokenVerifier.create(appConfig)
+    installFirebaseAuth(tokenVerifier)
 
     configureRouting()
 }

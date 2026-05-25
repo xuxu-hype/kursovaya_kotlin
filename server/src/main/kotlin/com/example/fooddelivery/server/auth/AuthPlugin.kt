@@ -9,12 +9,12 @@ import io.ktor.server.auth.bearer
  * Registers Ktor [Authentication] with bearer scheme `"firebase"`.
  * Protected routes can use `authenticate("firebase") { ... }` and read `FirebasePrincipal` via `call.principal<FirebasePrincipal>()`.
  */
-fun Application.installFirebaseAuth(firebaseAuthService: FirebaseAuthService) {
+fun Application.installFirebaseAuth(tokenVerifier: TokenVerifier) {
     install(Authentication) {
         bearer("firebase") {
             realm = "FoodDelivery API"
             authenticate { credential ->
-                firebaseAuthService.verifyIdToken(credential.token)
+                tokenVerifier.verify(credential.token)
             }
         }
     }

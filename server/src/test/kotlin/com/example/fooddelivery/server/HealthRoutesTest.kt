@@ -15,7 +15,7 @@ class HealthRoutesTest {
     fun `GET health returns OK`() = testApplication {
         application {
             configureSerialization()
-            configureRouting()
+            configureRouting(installProtectedRoutes = false)
         }
         val response = client.get("/health")
         assertEquals(HttpStatusCode.OK, response.status)
