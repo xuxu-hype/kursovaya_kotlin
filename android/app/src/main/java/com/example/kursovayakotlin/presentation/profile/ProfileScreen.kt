@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,14 +33,25 @@ fun ProfileScreen(
                 .padding(padding)
                 .padding(16.dp),
         ) {
-            Text(text = "Email", style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = uiState.email ?: "Unknown user",
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Email", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = uiState.email ?: "Unknown user",
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                    Text(
+                        text = "Authentication: Firebase Email/Password",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+            }
             Button(
                 onClick = viewModel::signOut,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
             ) {
                 Text("Sign out")
             }

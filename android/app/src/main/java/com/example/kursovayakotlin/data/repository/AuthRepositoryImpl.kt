@@ -6,14 +6,12 @@ import com.example.kursovayakotlin.data.remote.api.FoodApi
 import com.example.kursovayakotlin.data.remote.dto.SyncUserRequestDto
 import com.example.kursovayakotlin.domain.model.User
 import com.example.kursovayakotlin.domain.repository.AuthRepository
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
@@ -65,14 +63,3 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getCurrentUserEmail(): String? =
         firebaseAuth.currentUser?.email
 }
-
-private suspend fun <T> Task<T>.await(): T =
-    suspendCancellableCoroutine { continuation ->
-        addOnSuccessListener { result -> continuation.resume(result) }
-        addOnFailureListener { error ->
-            continuation.resumeWith(Result.failure(error))
-        }
-        addOnCanceledListener {
-            continuation.cancel()
-        }
-    }

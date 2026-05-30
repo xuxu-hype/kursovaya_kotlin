@@ -1,17 +1,31 @@
-# Food delivery — Ktor server
+# Food Delivery Ktor Server
 
 Kotlin JVM backend using Ktor (Netty), PostgreSQL (Neon-compatible), Flyway, Exposed, and Firebase Admin for ID token verification.
 
+## Stack
+
+- Kotlin/JVM and Ktor.
+- Exposed for SQL access.
+- Flyway for schema migrations and seed data.
+- PostgreSQL, including Neon-hosted PostgreSQL.
+- Firebase Admin SDK for ID token verification.
+- Ktor test application and JUnit tests.
+
+## Architecture
+
+- `routes`: HTTP endpoints and request/response mapping.
+- `domain`: models, repository interfaces, and use cases.
+- `data`: Exposed table definitions, database mappers, repository implementations.
+- `db`: database connection and Flyway migration startup.
+- `auth`: Firebase token verifier and Ktor authentication plugin.
+
 ## Prerequisites
 
-- JDK 21
-- Local PostgreSQL **or** a Neon database (connection via environment variables only — do not commit credentials)
+- JDK 21.
+- Local PostgreSQL or a Neon database.
+- Firebase service account JSON for protected routes.
 
-Optional for protected routes:
-
-- Firebase service account JSON file on disk; path passed via `GOOGLE_APPLICATION_CREDENTIALS`
-
-## Environment variables
+## Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
@@ -22,12 +36,34 @@ Optional for protected routes:
 
 If `DATABASE_*` are unset, the server uses **localhost** defaults (`jdbc:postgresql://localhost:5432/fooddelivery`, user/password `postgres`) for local development only.
 
-If `GOOGLE_APPLICATION_CREDENTIALS` is unset, Firebase token verification is **disabled** (bearer auth will reject all tokens until configured).
+If `GOOGLE_APPLICATION_CREDENTIALS` is unset, Firebase token verification is disabled and protected routes reject bearer tokens until configured.
 
-## Run locally
+## Neon PostgreSQL
+
+Create a Neon project, copy the JDBC host/database/user/password, then export:
+
+```bash
+export DATABASE_URL="jdbc:postgresql://<host>/<database>?sslmode=require"
+export DATABASE_USER="<user>"
+export DATABASE_PASSWORD="<password>"
+```
+
+Never commit Neon credentials.
+
+## Firebase
+
+Create a Firebase service account JSON file in Firebase Console and set:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/absolute/path/to/service-account.json"
+```
+
+Never commit service account JSON files.
+
+## Run Locally
 
 1. Create a database (e.g. `fooddelivery`) and set `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` if not using defaults.
-2. Export `GOOGLE_APPLICATION_CREDENTIALS` when you implement protected routes and need real token checks.
+2. Export `GOOGLE_APPLICATION_CREDENTIALS` for real Firebase token verification.
 3. From this directory:
 
 ```bash
@@ -41,6 +77,20 @@ curl -s http://localhost:8080/health
 ```
 
 Expected: `{"status":"OK"}`
+
+## Main Endpoints
+
+- `GET /health`
+- `GET /restaurants`
+- `GET /restaurants/{id}`
+- `GET /restaurants/{id}/menu`
+- `POST /me/sync`
+- `GET /me`
+- `POST /orders`
+- `GET /orders/my`
+- `GET /orders/{id}`
+
+Protected endpoints require `Authorization: Bearer <firebase-id-token>`. Orders require the Firebase user to be synced first via `POST /me/sync`.
 
 ## Tests
 

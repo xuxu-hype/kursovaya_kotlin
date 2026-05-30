@@ -2,18 +2,22 @@ package com.example.kursovayakotlin.presentation.cart
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,9 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,40 +63,62 @@ fun CartScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(uiState.items, key = { it.menuItemId }) { item ->
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = item.name, style = MaterialTheme.typography.titleMedium)
-                                Text(text = formatMoney(item.priceCents))
-                            }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                TextButton(
-                                    onClick = {
-                                        viewModel.updateQuantity(item.menuItemId, item.quantity - 1)
-                                    },
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                item.imageUrl
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { imageUrl ->
+                                        AsyncImage(
+                                            model = imageUrl,
+                                            contentDescription = item.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(88.dp)
+                                                .clip(RoundedCornerShape(10.dp)),
+                                        )
+                                    }
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(start = if (item.imageUrl.isNullOrBlank()) 0.dp else 12.dp),
                                 ) {
-                                    Text("-")
+                                    Text(text = item.name, style = MaterialTheme.typography.titleMedium)
+                                    Text(text = formatMoney(item.priceCents), modifier = Modifier.padding(top = 6.dp))
                                 }
-                                Text(item.quantity.toString())
-                                TextButton(
-                                    onClick = {
-                                        viewModel.updateQuantity(item.menuItemId, item.quantity + 1)
-                                    },
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
-                                    Text("+")
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.updateQuantity(item.menuItemId, item.quantity - 1)
+                                        },
+                                    ) {
+                                        Text("-")
+                                    }
+                                    Text(
+                                        text = item.quantity.toString(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.updateQuantity(item.menuItemId, item.quantity + 1)
+                                        },
+                                    ) {
+                                        Text("+")
+                                    }
                                 }
                             }
-                        }
-                        TextButton(onClick = { viewModel.removeItem(item.menuItemId) }) {
-                            Text("Remove")
+                            TextButton(onClick = { viewModel.removeItem(item.menuItemId) }) {
+                                Text("Remove")
+                            }
                         }
                     }
-                    HorizontalDivider()
                 }
             }
             uiState.errorMessage?.let {
@@ -114,12 +143,12 @@ fun CartScreen(
             )
             Button(
                 onClick = viewModel::createOrder,
-                enabled = uiState.items.isNotEmpty() && !uiState.isLoading,
+                enabled = uiState.items.isNotEmpty() && uiState.deliveryAddress.isNotBlank() && !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
             ) {
-                Text("Create order")
+                Text(if (uiState.isLoading) "Creating order..." else "Create order")
             }
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.padding(horizontal = 16.dp))

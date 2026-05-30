@@ -26,7 +26,7 @@ fun Route.registerOrderRoutes(
 ) {
     post("/orders") {
         val currentUser = call.currentSyncedUser(userRepository)
-            ?: return@post call.respondError(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Synced Firebase user is required.")
+            ?: return@post call.respondError(HttpStatusCode.NotFound, "USER_NOT_SYNCED", "Firebase user has not been synced yet.")
         val request = call.receive<CreateOrderRequest>()
 
         val restaurantId = parseUuid(request.restaurantId)
@@ -57,14 +57,14 @@ fun Route.registerOrderRoutes(
 
     get("/orders/my") {
         val currentUser = call.currentSyncedUser(userRepository)
-            ?: return@get call.respondError(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Synced Firebase user is required.")
+            ?: return@get call.respondError(HttpStatusCode.NotFound, "USER_NOT_SYNCED", "Firebase user has not been synced yet.")
 
         call.respond(getMyOrders(currentUser.id).map { it.toDto() })
     }
 
     get("/orders/{id}") {
         val currentUser = call.currentSyncedUser(userRepository)
-            ?: return@get call.respondError(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Synced Firebase user is required.")
+            ?: return@get call.respondError(HttpStatusCode.NotFound, "USER_NOT_SYNCED", "Firebase user has not been synced yet.")
         val orderId = parseUuid(call.parameters["id"])
             ?: return@get call.respondError(HttpStatusCode.BadRequest, "VALIDATION_ERROR", "Order id must be a valid UUID.")
 

@@ -12,7 +12,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,6 +34,15 @@ fun AuthScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
+        val authTextFieldColors = TextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+        )
+
         Text(
             text = "Food Delivery",
             style = MaterialTheme.typography.headlineMedium,
@@ -43,6 +54,7 @@ fun AuthScreen(
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
+            colors = authTextFieldColors,
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -51,6 +63,7 @@ fun AuthScreen(
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
+            colors = authTextFieldColors,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),

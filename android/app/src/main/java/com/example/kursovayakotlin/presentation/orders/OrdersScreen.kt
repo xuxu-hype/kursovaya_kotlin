@@ -1,16 +1,18 @@
 package com.example.kursovayakotlin.presentation.orders
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,23 +55,28 @@ fun OrdersScreen(
                     Text("Retry")
                 }
             }
-            if (!uiState.isLoading && uiState.orders.isEmpty()) {
+            if (!uiState.isLoading && uiState.errorMessage == null && uiState.orders.isEmpty()) {
                 Text("No orders yet.", modifier = Modifier.padding(16.dp))
             }
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 items(uiState.orders, key = { it.id }) { order ->
-                    Column(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOrderClick(order.id) }
-                            .padding(16.dp),
+                            .clickable { onOrderClick(order.id) },
                     ) {
-                        Text(text = "Order #${order.id}", style = MaterialTheme.typography.titleMedium)
-                        Text(text = "Status: ${order.status}")
-                        Text(text = "Total: ${formatMoney(order.totalCents)}")
-                        Text(text = order.createdAt)
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "Order #${order.id}", style = MaterialTheme.typography.titleMedium)
+                            Text(text = "Status: ${order.status}", modifier = Modifier.padding(top = 8.dp))
+                            Text(text = "Total: ${formatMoney(order.totalCents)}", modifier = Modifier.padding(top = 4.dp))
+                            Text(text = "Created: ${order.createdAt}", modifier = Modifier.padding(top = 4.dp))
+                            Text(text = "Address: ${order.deliveryAddress}", modifier = Modifier.padding(top = 4.dp))
+                        }
                     }
-                    HorizontalDivider()
                 }
             }
         }

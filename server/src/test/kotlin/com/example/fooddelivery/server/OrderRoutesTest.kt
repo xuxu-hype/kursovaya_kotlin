@@ -20,6 +20,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -86,7 +87,7 @@ class OrderRoutesTest {
     }
 
     @Test
-    fun `GET orders my with fake token returns 200`() = testApplication {
+    fun `GET orders my with synced user and no orders returns 200 empty list`() = testApplication {
         application {
             configureSerialization()
             installFirebaseAuth(fakeTokenVerifier())
@@ -98,6 +99,23 @@ class OrderRoutesTest {
         }
 
         assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("[]", response.bodyAsText())
+    }
+
+    @Test
+    fun `GET orders my with unsynced user returns user not synced instead of 500`() = testApplication {
+        application {
+            configureSerialization()
+            installFirebaseAuth(fakeTokenVerifier())
+            configureRouting(dependencies = testDependencies(userRepository = FakeOrderUserRepository(userId, isSynced = false)))
+        }
+
+        val response = client.get("/orders/my") {
+            bearerAuth("valid-token")
+        }
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+        assertEquals("""{"code":"USER_NOT_SYNCED","message":"Firebase user has not been synced yet.","details":null}""", response.bodyAsText())
     }
 
     private fun validOrderBody(quantity: Int = 2): String =
@@ -125,9 +143,11 @@ class OrderRoutesTest {
             ),
         )
 
-    private fun testDependencies(): ApplicationDependencies =
+    private fun testDependencies(
+        userRepository: UserRepository = FakeOrderUserRepository(userId),
+    ): ApplicationDependencies =
         ApplicationDependencies(
-            userRepository = FakeOrderUserRepository(userId),
+            userRepository = userRepository,
             restaurantRepository = FakeOrderRestaurantRepository(restaurantId, menuItemId),
             orderRepository = FakeOrderRepository(),
         )
@@ -135,6 +155,7 @@ class OrderRoutesTest {
 
 private class FakeOrderUserRepository(
     private val userId: UUID,
+    private val isSynced: Boolean = true,
 ) : UserRepository {
     private val user = User(
         id = userId,
@@ -147,7 +168,7 @@ private class FakeOrderUserRepository(
     )
 
     override fun findByFirebaseUid(firebaseUid: String): User? =
-        user.takeIf { it.firebaseUid == firebaseUid }
+        user.takeIf { isSynced && it.firebaseUid == firebaseUid }
 
     override fun syncFirebaseUser(
         firebaseUid: String,

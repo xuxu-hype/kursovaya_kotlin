@@ -1,7 +1,9 @@
 package com.example.kursovayakotlin.presentation.restaurants
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,9 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,34 +57,46 @@ fun RestaurantsScreen(
                     Text("Retry")
                 }
             }
-            if (!uiState.isLoading && uiState.restaurants.isEmpty()) {
+            if (!uiState.isLoading && uiState.errorMessage == null && uiState.restaurants.isEmpty()) {
                 Text("No restaurants yet.", modifier = Modifier.padding(16.dp))
             }
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 items(uiState.restaurants, key = { it.id }) { restaurant ->
-                    Column(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onRestaurantClick(restaurant.id) }
-                            .padding(16.dp),
+                            .clickable { onRestaurantClick(restaurant.id) },
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = restaurant.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Text(if (restaurant.isOpen) "Open" else "Closed")
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = restaurant.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    text = if (restaurant.isOpen) "Open" else "Closed",
+                                    color = if (restaurant.isOpen) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.error
+                                    },
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                            restaurant.description?.let {
+                                Text(text = it, modifier = Modifier.padding(top = 8.dp))
+                            }
+                            restaurant.address?.let {
+                                Text(text = "Address: $it", modifier = Modifier.padding(top = 8.dp))
+                            }
+                            Text(text = "Rating: ${restaurant.rating}", modifier = Modifier.padding(top = 8.dp))
                         }
-                        restaurant.description?.let {
-                            Text(text = it, modifier = Modifier.padding(top = 4.dp))
-                        }
-                        restaurant.address?.let {
-                            Text(text = it, modifier = Modifier.padding(top = 4.dp))
-                        }
-                        Text(text = "Rating: ${restaurant.rating}", modifier = Modifier.padding(top = 4.dp))
                     }
-                    HorizontalDivider()
                 }
             }
         }

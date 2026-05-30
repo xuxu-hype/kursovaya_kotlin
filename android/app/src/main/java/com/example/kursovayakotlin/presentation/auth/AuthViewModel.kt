@@ -24,11 +24,17 @@ class AuthViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    private var hasSyncedAuthenticatedUser = false
 
     init {
         viewModelScope.launch {
             observeAuthStateUseCase().collect { isAuthenticated ->
                 _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+                if (isAuthenticated) {
+                    syncCurrentUser()
+                } else {
+                    hasSyncedAuthenticatedUser = false
+                }
             }
         }
     }
@@ -61,7 +67,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = authAction(email, password)) {
-                is AppResult.Success -> syncCurrentUser()
+                is AppResult.Success -> syncCurrentUser(force = true)
                 is AppResult.Failure -> {
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = result.message ?: "Authentication failed.")
@@ -71,13 +77,22 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private suspend fun syncCurrentUser() {
+    suspend fun syncCurrentUser(force: Boolean = false): AppResult<Unit> {
+        if (!force && hasSyncedAuthenticatedUser) {
+            return AppResult.Success(Unit)
+        }
+
         when (val result = syncMeUseCase()) {
-            is AppResult.Success -> _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+            is AppResult.Success -> {
+                hasSyncedAuthenticatedUser = true
+                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                return AppResult.Success(Unit)
+            }
             is AppResult.Failure -> {
                 _uiState.update {
                     it.copy(isLoading = false, errorMessage = result.message ?: "Signed in, but profile sync failed.")
                 }
+                return AppResult.Failure(message = result.message, cause = result.cause)
             }
         }
     }

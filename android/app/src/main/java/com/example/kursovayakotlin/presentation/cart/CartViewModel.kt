@@ -7,6 +7,7 @@ import com.example.kursovayakotlin.domain.usecase.cart.CalculateCartTotalUseCase
 import com.example.kursovayakotlin.domain.usecase.cart.ObserveCartUseCase
 import com.example.kursovayakotlin.domain.usecase.cart.RemoveFromCartUseCase
 import com.example.kursovayakotlin.domain.usecase.cart.UpdateCartQuantityUseCase
+import com.example.kursovayakotlin.domain.usecase.auth.SyncMeUseCase
 import com.example.kursovayakotlin.domain.usecase.orders.CreateOrderUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -22,6 +23,7 @@ class CartViewModel @Inject constructor(
     private val calculateCartTotalUseCase: CalculateCartTotalUseCase,
     private val updateCartQuantityUseCase: UpdateCartQuantityUseCase,
     private val removeFromCartUseCase: RemoveFromCartUseCase,
+    private val syncMeUseCase: SyncMeUseCase,
     private val createOrderUseCase: CreateOrderUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CartUiState())
@@ -68,6 +70,16 @@ class CartViewModel @Inject constructor(
     fun createOrder() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, createdOrderId = null) }
+            when (val syncResult = syncMeUseCase()) {
+                is AppResult.Success -> Unit
+                is AppResult.Failure -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = syncResult.message ?: "Could not sync profile.")
+                    }
+                    return@launch
+                }
+            }
+
             when (val result = createOrderUseCase(_uiState.value.deliveryAddress)) {
                 is AppResult.Success -> {
                     _uiState.update {

@@ -1,5 +1,5 @@
 package com.example.kursovayakotlin.core.network
 
 interface AuthTokenProvider {
-    fun getToken(): String?
+    suspend fun getToken(): String?
 }

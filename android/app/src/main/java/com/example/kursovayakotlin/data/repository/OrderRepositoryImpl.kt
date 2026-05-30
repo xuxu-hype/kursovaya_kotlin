@@ -12,6 +12,7 @@ import com.example.kursovayakotlin.domain.model.Order
 import com.example.kursovayakotlin.domain.repository.OrderRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class OrderRepositoryImpl @Inject constructor(
@@ -48,7 +49,7 @@ class OrderRepositoryImpl @Inject constructor(
                 .toDomain(orderDto.items.mapNotNull { it.toEntity() })
         }.fold(
             onSuccess = { AppResult.Success(it) },
-            onFailure = { AppResult.Failure(message = it.message, cause = it) },
+            onFailure = { it.toFailure("Could not create order.") },
         )
     }
 
@@ -66,7 +67,7 @@ class OrderRepositoryImpl @Inject constructor(
             orders.forEach { saveOrder(it) }
         }.fold(
             onSuccess = { AppResult.Success(Unit) },
-            onFailure = { AppResult.Failure(message = it.message, cause = it) },
+            onFailure = { it.toFailure("Could not load orders.") },
         )
 
     override suspend fun getOrderById(orderId: String): AppResult<Order> {
@@ -81,12 +82,34 @@ class OrderRepositoryImpl @Inject constructor(
                 .toDomain(orderDto.items.mapNotNull { it.toEntity() })
         }.fold(
             onSuccess = { AppResult.Success(it) },
-            onFailure = { AppResult.Failure(message = it.message, cause = it) },
+            onFailure = { it.toFailure("Could not load order.") },
         )
     }
 
     private suspend fun saveOrder(order: com.example.kursovayakotlin.data.remote.dto.OrderDto) {
         order.toEntity()?.let { orderDao.upsertOrders(listOf(it)) }
         orderDao.upsertOrderItems(order.items.mapNotNull { it.toEntity() })
+    }
+
+    private fun Throwable.toFailure(fallback: String): AppResult.Failure {
+        if (this is HttpException) {
+            val errorBody = response()?.errorBody()?.string().orEmpty()
+            if (errorBody.contains("USER_NOT_SYNCED")) {
+                return AppResult.Failure(
+                    code = "USER_NOT_SYNCED",
+                    message = "Profile is not synced yet. Please try again.",
+                    cause = this,
+                )
+            }
+            if (code() == 401) {
+                return AppResult.Failure(
+                    code = "UNAUTHORIZED",
+                    message = "Authentication failed. Please sign in again.",
+                    cause = this,
+                )
+            }
+        }
+
+        return AppResult.Failure(message = message ?: fallback, cause = this)
     }
 }

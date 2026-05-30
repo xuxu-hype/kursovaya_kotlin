@@ -2,8 +2,10 @@ package com.example.kursovayakotlin.di
 
 import com.example.kursovayakotlin.core.network.AuthInterceptor
 import com.example.kursovayakotlin.core.network.AuthTokenProvider
+import com.example.kursovayakotlin.core.network.FirebaseAuthTokenProvider
 import com.example.kursovayakotlin.core.network.NetworkConfig
 import com.example.kursovayakotlin.data.remote.api.FoodApi
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,47 +18,47 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
-    @Provides
+abstract class NetworkModule {
+    @Binds
     @Singleton
-    fun provideAuthTokenProvider(): AuthTokenProvider =
-        object : AuthTokenProvider {
-            override fun getToken(): String? = null
-        }
+    abstract fun bindAuthTokenProvider(impl: FirebaseAuthTokenProvider): AuthTokenProvider
 
-    @Provides
-    @Singleton
-    fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor =
-        HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
+    companion object {
+        @Provides
+        @Singleton
+        fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor =
+            HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+                redactHeader("Authorization")
+            }
 
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(
-        authInterceptor: AuthInterceptor,
-        loggingInterceptor: HttpLoggingInterceptor,
-    ): OkHttpClient =
-        OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
-            .addInterceptor(loggingInterceptor)
-            .build()
+        @Provides
+        @Singleton
+        fun provideOkHttpClient(
+            authInterceptor: AuthInterceptor,
+            loggingInterceptor: HttpLoggingInterceptor,
+        ): OkHttpClient =
+            OkHttpClient.Builder()
+                .addInterceptor(authInterceptor)
+                .addInterceptor(loggingInterceptor)
+                .build()
 
-    @Provides
-    @Singleton
-    fun provideRetrofit(
-        okHttpClient: OkHttpClient,
-    ): Retrofit =
-        Retrofit.Builder()
-            .baseUrl(NetworkConfig.BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        @Provides
+        @Singleton
+        fun provideRetrofit(
+            okHttpClient: OkHttpClient,
+        ): Retrofit =
+            Retrofit.Builder()
+                .baseUrl(NetworkConfig.BASE_URL)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
-    @Provides
-    @Singleton
-    fun provideFoodApi(
-        retrofit: Retrofit,
-    ): FoodApi =
-        retrofit.create(FoodApi::class.java)
+        @Provides
+        @Singleton
+        fun provideFoodApi(
+            retrofit: Retrofit,
+        ): FoodApi =
+            retrofit.create(FoodApi::class.java)
+    }
 }

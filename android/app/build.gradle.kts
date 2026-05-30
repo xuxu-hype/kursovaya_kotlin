@@ -2,8 +2,20 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services) apply false
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+}
+
+val googleServicesFile = layout.projectDirectory.file("google-services.json").asFile
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.warn(
+        "Firebase Auth is enabled, but android/app/google-services.json is missing. " +
+            "Add your local Firebase config file to run real authentication. " +
+            "The file is ignored by git and must not be committed.",
+    )
 }
 
 android {
@@ -19,7 +31,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+        buildConfigField("String", "BASE_URL", "\"http://192.168.1.12:8080/\"")
     }
 
     buildTypes {
@@ -50,7 +62,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -63,12 +74,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.coil.compose)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
